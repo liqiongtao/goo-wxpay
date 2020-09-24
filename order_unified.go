@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/liqiongtao/goo"
 	"github.com/liqiongtao/goo/utils"
-	"log"
 	"strings"
 	"time"
 )
@@ -42,7 +41,7 @@ func (uo *UnifiedOrderRequest) toXml(apiKey string) []byte {
 	}
 
 	str := obj2querystring(uo) + fmt.Sprintf("&key=%s", apiKey)
-	log.Println("[UnifiedOrderRequest.querystring]", str)
+	goo.Log.Debug("[wxpay-unified-order][req-query-string]", str)
 
 	if uo.SignType == SIGN_TYPE_HMAC_SHA256 {
 		uo.Sign = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
@@ -82,7 +81,7 @@ func (uo *UnifiedOrderResponse) toJsApi(apiKey string, signType SignType) map[st
 	}
 
 	str := map2querystring(data) + fmt.Sprintf("&key=%s", apiKey)
-	log.Println("[UnifiedOrder.JSAPI.querystring]", str)
+	goo.Log.Debug("[wxpay-unified-order][jsapi-query-string]", str)
 
 	if signType == SIGN_TYPE_HMAC_SHA256 {
 		data["paySign"] = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
@@ -107,7 +106,7 @@ func (uo *UnifiedOrderResponse) toApp(apiKey string, signType SignType) map[stri
 	}
 
 	str := map2querystring(data) + fmt.Sprintf("&key=%s", apiKey)
-	log.Println("[UnifiedOrder.APP.querystring]", str)
+	goo.Log.Debug("[wxpay-unified-order][app-query-string]", str)
 
 	if signType == SIGN_TYPE_HMAC_SHA256 {
 		data["sign"] = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
@@ -120,23 +119,27 @@ func (uo *UnifiedOrderResponse) toApp(apiKey string, signType SignType) map[stri
 
 func UnifiedOrder(req *UnifiedOrderRequest, apiKey string) (map[string]interface{}, error) {
 	buf := req.toXml(apiKey)
-	log.Println("[UnifiedOrderRequest.xml]", string(buf))
+	goo.Log.Debug("[wxpay-unified-order][req-xml]", string(buf))
 
 	rstBuf, err := goo.NewRequest().Post(URL_UNIFIED_ORDER, buf)
 	if err != nil {
+		goo.Log.Error("[wxpay-unified-order]", err.Error())
 		return nil, err
 	}
 
-	log.Println("[UnifiedOrderResponse.xml]", string(rstBuf))
+	goo.Log.Debug("[wxpay-unified-order][rsp-xml]", string(rstBuf))
 
 	rsp := UnifiedOrderResponse{}
 	if err := xml.Unmarshal(rstBuf, &rsp); err != nil {
+		goo.Log.Error("[wxpay-unified-order]", err.Error())
 		return nil, err
 	}
 	if rsp.ReturnCode == FAIL {
+		goo.Log.Error("[wxpay-unified-order]", rsp.ReturnMsg)
 		return nil, errors.New(rsp.ReturnMsg)
 	}
 	if rsp.ResultCode == FAIL {
+		goo.Log.Error("[wxpay-unified-order]", rsp.ErrCodeDes)
 		return nil, errors.New(rsp.ErrCodeDes)
 	}
 

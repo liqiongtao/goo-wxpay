@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/liqiongtao/goo"
 	"github.com/liqiongtao/goo/utils"
-	"log"
 	"strings"
 )
 
@@ -32,7 +31,7 @@ func (r *RefundQueryRequest) toXml(apiKey string) []byte {
 	}
 
 	str := obj2querystring(r) + fmt.Sprintf("&key=%s", apiKey)
-	log.Println("[RefundQueryRequest.querystring]", str)
+	goo.Log.Debug("[wxpay-refund-query][req-query-string]", str)
 
 	if r.SignType == SIGN_TYPE_HMAC_SHA256 {
 		r.Sign = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
@@ -82,23 +81,27 @@ type RefundQueryResponse struct {
 
 func RefundQuery(req *RefundQueryRequest, apiKey string) (*RefundQueryResponse, error) {
 	buf := req.toXml(apiKey)
-	log.Println("[RefundRequest.xml]", string(buf))
+	goo.Log.Debug("[wxpay-refund-query][req-xml]", string(buf))
 
 	rstBuf, err := goo.NewRequest().Post(URL_REFUND_QUERY, buf)
 	if err != nil {
+		goo.Log.Error("[wxpay-refund-query]", err.Error())
 		return nil, err
 	}
 
-	log.Println("[RefundResponse.xml]", string(rstBuf))
+	goo.Log.Debug("[wxpay-refund-query][rsp-xml]", string(rstBuf))
 
 	rsp := &RefundQueryResponse{}
 	if err := xml.Unmarshal(rstBuf, rsp); err != nil {
+		goo.Log.Error("[wxpay-refund-query]", err.Error())
 		return nil, err
 	}
 	if rsp.ReturnCode == FAIL {
+		goo.Log.Error("[wxpay-refund-query]", rsp.ReturnMsg)
 		return nil, errors.New(rsp.ReturnMsg)
 	}
 	if rsp.ResultCode == FAIL {
+		goo.Log.Error("[wxpay-refund-query]", rsp.ErrCodeDes)
 		return nil, errors.New(rsp.ErrCodeDes)
 	}
 

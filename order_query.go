@@ -76,22 +76,27 @@ func QueryOrder(req *QueryOrderRequest, apiKey string) (*QueryOrderResponse, err
 
 	rstBuf, err := goo.NewRequest().Post(URL_ORDER_QUERY, buf)
 	if err != nil {
+		goo.Log.Error("[wxpay-order-query]", err.Error())
 		return nil, err
 	}
 
-	log.Println("[QueryOrderResponse.xml]", string(rstBuf))
+	goo.Log.Debug("[wxpay-order-query][rsp-xml]", string(rstBuf))
 
 	rsp := &QueryOrderResponse{}
 	if err := xml.Unmarshal(rstBuf, rsp); err != nil {
+		goo.Log.Error("[wxpay-order-query]", err.Error())
 		return nil, err
 	}
 	if rsp.ReturnCode == FAIL {
+		goo.Log.Error("[wxpay-order-query]", rsp.ReturnMsg)
 		return nil, errors.New(rsp.ReturnMsg)
 	}
 	if rsp.ResultCode == FAIL {
+		goo.Log.Error("[wxpay-order-query]", rsp.ErrCodeDes)
 		return nil, errors.New(rsp.ErrCodeDes)
 	}
 	if rsp.TradeState != SUCCESS {
+		goo.Log.Error("[wxpay-order-query]", tradeStateMsg[rsp.TradeState])
 		return nil, errors.New(tradeStateMsg[rsp.TradeState])
 	}
 

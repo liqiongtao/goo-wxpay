@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/liqiongtao/goo"
 	"github.com/liqiongtao/goo/utils"
 	"strings"
 )
@@ -37,9 +38,11 @@ func RefundNotify(buf []byte, apiKey string) (*RefundReqInfo, error) {
 	data := &RefundData{}
 
 	if err := xml.Unmarshal(buf, data); err != nil {
+		goo.Log.Error("[wxpay-refund-notify]", err.Error())
 		return nil, err
 	}
 	if data.ReturnCode == FAIL {
+		goo.Log.Error("[wxpay-refund-notify]", data.ReturnMsg)
 		return nil, errors.New(data.ReturnMsg)
 	}
 
@@ -49,11 +52,13 @@ func RefundNotify(buf []byte, apiKey string) (*RefundReqInfo, error) {
 	fmt.Println("key:", key)
 	infoBuf, err := utils.AESECBDecrypt(base64buf, []byte(key))
 	if err != nil {
+		goo.Log.Error("[wxpay-refund-notify]", err.Error())
 		return nil, err
 	}
 
 	info := &RefundReqInfo{}
 	if err := xml.Unmarshal(infoBuf, info); err != nil {
+		goo.Log.Error("[wxpay-refund-notify]", err.Error())
 		return nil, err
 	}
 	return info, nil
