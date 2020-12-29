@@ -3,7 +3,6 @@ package goo_wxpay
 import (
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"github.com/liqiongtao/goo"
 	"github.com/liqiongtao/goo/utils"
 	"strings"
@@ -38,27 +37,26 @@ func RefundNotify(buf []byte, apiKey string) (*RefundReqInfo, error) {
 	data := &RefundData{}
 
 	if err := xml.Unmarshal(buf, data); err != nil {
-		goo.Log.Error("[wxpay-refund-notify]", err.Error())
+		goo.Log.Error(err.Error())
 		return nil, err
 	}
 	if data.ReturnCode == FAIL {
-		goo.Log.Error("[wxpay-refund-notify]", data.ReturnMsg)
+		goo.Log.Error(data.ReturnMsg)
 		return nil, errors.New(data.ReturnMsg)
 	}
 
 	base64buf := utils.Base64Decode(data.ReqInfo)
 	key := strings.ToUpper(utils.MD5([]byte(apiKey)))
-	fmt.Println("base64buf:", string(base64buf))
-	fmt.Println("key:", key)
+	goo.Log.WithField("base64buf", string(base64buf)).WithField("key", key).Debug()
 	infoBuf, err := utils.AESECBDecrypt(base64buf, []byte(key))
 	if err != nil {
-		goo.Log.Error("[wxpay-refund-notify]", err.Error())
+		goo.Log.Error(err.Error())
 		return nil, err
 	}
 
 	info := &RefundReqInfo{}
 	if err := xml.Unmarshal(infoBuf, info); err != nil {
-		goo.Log.Error("[wxpay-refund-notify]", err.Error())
+		goo.Log.Error(err.Error())
 		return nil, err
 	}
 	return info, nil

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/liqiongtao/goo"
 	"github.com/liqiongtao/goo/utils"
-	"log"
 	"strings"
 )
 
@@ -29,7 +28,7 @@ func (qo *QueryOrderRequest) toXml(apiKey string) []byte {
 	}
 
 	str := obj2querystring(qo) + fmt.Sprintf("&key=%s", apiKey)
-	log.Println("[UnifiedOrderRequest.querystring]", str)
+	goo.Log.WithField("query-string", str).Debug("unified-order")
 
 	if qo.SignType == SIGN_TYPE_HMAC_SHA256 {
 		qo.Sign = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
@@ -72,31 +71,31 @@ type QueryOrderResponse struct {
 
 func QueryOrder(req *QueryOrderRequest, apiKey string) (*QueryOrderResponse, error) {
 	buf := req.toXml(apiKey)
-	log.Println("[QueryOrderRequest.xml]", string(buf))
+	goo.Log.WithField("req-xml", string(buf)).Debug("wxpay-order-query")
 
 	rstBuf, err := goo.NewRequest().Post(URL_ORDER_QUERY, buf)
 	if err != nil {
-		goo.Log.Error("[wxpay-order-query]", err.Error())
+		goo.Log.Error(err.Error())
 		return nil, err
 	}
 
-	goo.Log.Debug("[wxpay-order-query][rsp-xml]", string(rstBuf))
+	goo.Log.WithField("res-xml", string(rstBuf)).Debug("wxpay-order-query")
 
 	rsp := &QueryOrderResponse{}
 	if err := xml.Unmarshal(rstBuf, rsp); err != nil {
-		goo.Log.Error("[wxpay-order-query]", err.Error())
+		goo.Log.Error(err.Error())
 		return nil, err
 	}
 	if rsp.ReturnCode == FAIL {
-		goo.Log.Error("[wxpay-order-query]", rsp.ReturnMsg)
+		goo.Log.Error(rsp.ReturnMsg)
 		return nil, errors.New(rsp.ReturnMsg)
 	}
 	if rsp.ResultCode == FAIL {
-		goo.Log.Error("[wxpay-order-query]", rsp.ErrCodeDes)
+		goo.Log.Error(rsp.ErrCodeDes)
 		return nil, errors.New(rsp.ErrCodeDes)
 	}
 	if rsp.TradeState != SUCCESS {
-		goo.Log.Error("[wxpay-order-query]", tradeStateMsg[rsp.TradeState])
+		goo.Log.Error(tradeStateMsg[rsp.TradeState])
 		return nil, errors.New(tradeStateMsg[rsp.TradeState])
 	}
 
