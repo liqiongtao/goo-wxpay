@@ -4,8 +4,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/liqiongtao/goo"
-	"github.com/liqiongtao/goo/utils"
+	goo_http_request "github.com/liqiongtao/googo.io/goo-http-request"
+	goo_log "github.com/liqiongtao/googo.io/goo-log"
+	goo_utils "github.com/liqiongtao/googo.io/goo-utils"
 	"strings"
 	"time"
 )
@@ -34,19 +35,19 @@ type UnifiedOrderRequest struct {
 
 func (uo *UnifiedOrderRequest) toXml(apiKey string) []byte {
 	if uo.NonceStr == "" {
-		uo.NonceStr = utils.NonceStr()
+		uo.NonceStr = goo_utils.NonceStr()
 	}
 	if uo.SignType == "" {
 		uo.SignType = SIGN_TYPE_HMAC_SHA256
 	}
 
 	str := obj2querystring(uo) + fmt.Sprintf("&key=%s", apiKey)
-	goo.Log.WithField("query-string", str).Debug("wxpay-unified-order")
+	goo_log.WithField("query-string", str).Debug("wxpay-unified-order")
 
 	if uo.SignType == SIGN_TYPE_HMAC_SHA256 {
-		uo.Sign = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
+		uo.Sign = strings.ToUpper(goo_utils.HMacSha256([]byte(str), []byte(apiKey)))
 	} else if uo.SignType == SIGN_TYPE_MD5 {
-		uo.Sign = strings.ToUpper(utils.MD5([]byte(str)))
+		uo.Sign = strings.ToUpper(goo_utils.MD5([]byte(str)))
 	}
 
 	return obj2xml(uo)
@@ -81,12 +82,12 @@ func (uo *UnifiedOrderResponse) toJsApi(apiKey string, signType SignType) map[st
 	}
 
 	str := map2querystring(data) + fmt.Sprintf("&key=%s", apiKey)
-	goo.Log.WithField("query-string", str).Debug("wxpay-unified-order")
+	goo_log.WithField("query-string", str).Debug("wxpay-unified-order")
 
 	if signType == SIGN_TYPE_HMAC_SHA256 {
-		data["paySign"] = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
+		data["paySign"] = strings.ToUpper(goo_utils.HMacSha256([]byte(str), []byte(apiKey)))
 	} else if signType == SIGN_TYPE_MD5 {
-		data["paySign"] = strings.ToUpper(utils.MD5([]byte(str)))
+		data["paySign"] = strings.ToUpper(goo_utils.MD5([]byte(str)))
 	}
 
 	data["timestamp"] = data["timeStamp"]
@@ -106,12 +107,12 @@ func (uo *UnifiedOrderResponse) toApp(apiKey string, signType SignType) map[stri
 	}
 
 	str := map2querystring(data) + fmt.Sprintf("&key=%s", apiKey)
-	goo.Log.WithField("query-string", str).Debug("wxpay-unified-order")
+	goo_log.WithField("query-string", str).Debug("wxpay-unified-order")
 
 	if signType == SIGN_TYPE_HMAC_SHA256 {
-		data["sign"] = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
+		data["sign"] = strings.ToUpper(goo_utils.HMacSha256([]byte(str), []byte(apiKey)))
 	} else if signType == SIGN_TYPE_MD5 {
-		data["sign"] = strings.ToUpper(utils.MD5([]byte(str)))
+		data["sign"] = strings.ToUpper(goo_utils.MD5([]byte(str)))
 	}
 
 	return data
@@ -119,27 +120,27 @@ func (uo *UnifiedOrderResponse) toApp(apiKey string, signType SignType) map[stri
 
 func UnifiedOrder(req *UnifiedOrderRequest, apiKey string) (map[string]interface{}, error) {
 	buf := req.toXml(apiKey)
-	goo.Log.WithField("req-xml", string(buf)).Debug("wxpay-unified-order")
+	goo_log.WithField("req-xml", string(buf)).Debug("wxpay-unified-order")
 
-	rstBuf, err := goo.NewRequest().Post(URL_UNIFIED_ORDER, buf)
+	rstBuf, err := goo_http_request.Post(URL_UNIFIED_ORDER, buf)
 	if err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return nil, err
 	}
 
-	goo.Log.WithField("res-xml", string(rstBuf)).Debug("wxpay-unified-order")
+	goo_log.WithField("res-xml", string(rstBuf)).Debug("wxpay-unified-order")
 
 	rsp := UnifiedOrderResponse{}
 	if err := xml.Unmarshal(rstBuf, &rsp); err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return nil, err
 	}
 	if rsp.ReturnCode == FAIL {
-		goo.Log.Error(rsp.ReturnMsg)
+		goo_log.Error(rsp.ReturnMsg)
 		return nil, errors.New(rsp.ReturnMsg)
 	}
 	if rsp.ResultCode == FAIL {
-		goo.Log.Error(rsp.ErrCodeDes)
+		goo_log.Error(rsp.ErrCodeDes)
 		return nil, errors.New(rsp.ErrCodeDes)
 	}
 

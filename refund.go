@@ -4,8 +4,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/liqiongtao/goo"
-	"github.com/liqiongtao/goo/utils"
+	goo_http_request "github.com/liqiongtao/googo.io/goo-http-request"
+	goo_log "github.com/liqiongtao/googo.io/goo-log"
+	goo_utils "github.com/liqiongtao/googo.io/goo-utils"
 	"strings"
 )
 
@@ -27,19 +28,19 @@ type RefundRequest struct {
 
 func (r *RefundRequest) toXml(apiKey string) []byte {
 	if r.NonceStr == "" {
-		r.NonceStr = utils.NonceStr()
+		r.NonceStr = goo_utils.NonceStr()
 	}
 	if r.SignType == "" {
 		r.SignType = SIGN_TYPE_HMAC_SHA256
 	}
 
 	str := obj2querystring(r) + fmt.Sprintf("&key=%s", apiKey)
-	goo.Log.WithField("query-string", str).Debug("wxpay-refund")
+	goo_log.WithField("query-string", str).Debug("wxpay-refund")
 
 	if r.SignType == SIGN_TYPE_HMAC_SHA256 {
-		r.Sign = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
+		r.Sign = strings.ToUpper(goo_utils.HMacSha256([]byte(str), []byte(apiKey)))
 	} else if r.SignType == SIGN_TYPE_MD5 {
-		r.Sign = strings.ToUpper(utils.MD5([]byte(str)))
+		r.Sign = strings.ToUpper(goo_utils.MD5([]byte(str)))
 	}
 
 	return obj2xml(r)
@@ -74,27 +75,27 @@ type RefundResponse struct {
 
 func Refund(req *RefundRequest, apiKey, clientCrtFile, clientKeyFile string) (*RefundResponse, error) {
 	buf := req.toXml(apiKey)
-	goo.Log.WithField("req-xml", string(buf)).Debug("wxpay-refund")
+	goo_log.WithField("req-xml", string(buf)).Debug("wxpay-refund")
 
-	rstBuf, err := goo.NewTlsRequest("", clientCrtFile, clientKeyFile).Post(URL_REFUND, buf)
+	rstBuf, err := goo_http_request.New(goo_http_request.TlsOption("", clientCrtFile, clientKeyFile)).Post(URL_REFUND, buf)
 	if err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return nil, err
 	}
 
-	goo.Log.WithField("res-xml", string(rstBuf)).Debug("wxpay-refund")
+	goo_log.WithField("res-xml", string(rstBuf)).Debug("wxpay-refund")
 
 	rsp := &RefundResponse{}
 	if err := xml.Unmarshal(rstBuf, rsp); err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return nil, err
 	}
 	if rsp.ReturnCode == FAIL {
-		goo.Log.Error(rsp.ReturnMsg)
+		goo_log.Error(rsp.ReturnMsg)
 		return nil, errors.New(rsp.ReturnMsg)
 	}
 	if rsp.ResultCode == FAIL {
-		goo.Log.Error(rsp.ErrCodeDes)
+		goo_log.Error(rsp.ErrCodeDes)
 		return nil, errors.New(rsp.ErrCodeDes)
 	}
 

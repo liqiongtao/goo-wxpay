@@ -4,8 +4,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/liqiongtao/goo"
-	"github.com/liqiongtao/goo/utils"
+	goo_http_request "github.com/liqiongtao/googo.io/goo-http-request"
+	goo_log "github.com/liqiongtao/googo.io/goo-log"
+	goo_utils "github.com/liqiongtao/googo.io/goo-utils"
 	"strings"
 )
 
@@ -20,19 +21,19 @@ type CloseOrderRequest struct {
 
 func (co *CloseOrderRequest) toXml(apiKey string) []byte {
 	if co.NonceStr == "" {
-		co.NonceStr = utils.NonceStr()
+		co.NonceStr = goo_utils.NonceStr()
 	}
 	if co.SignType == "" {
 		co.SignType = SIGN_TYPE_HMAC_SHA256
 	}
 
 	str := obj2querystring(co) + fmt.Sprintf("&key=%s", apiKey)
-	goo.Log.WithField("query-string", str).Debug("wxpay-order-close")
+	goo_log.WithField("query-string", str).Debug("wxpay-order-close")
 
 	if co.SignType == SIGN_TYPE_HMAC_SHA256 {
-		co.Sign = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
+		co.Sign = strings.ToUpper(goo_utils.HMacSha256([]byte(str), []byte(apiKey)))
 	} else if co.SignType == SIGN_TYPE_MD5 {
-		co.Sign = strings.ToUpper(utils.MD5([]byte(str)))
+		co.Sign = strings.ToUpper(goo_utils.MD5([]byte(str)))
 	}
 
 	return obj2xml(co)
@@ -54,27 +55,27 @@ type CloseOrderResponse struct {
 
 func CloseOrder(req *CloseOrderRequest, apiKey string) error {
 	buf := req.toXml(apiKey)
-	goo.Log.WithField("req-xml", string(buf)).Debug("wxpay-close-order")
+	goo_log.WithField("req-xml", string(buf)).Debug("wxpay-close-order")
 
-	rstBuf, err := goo.NewRequest().Post(URL_ORDER_QUERY, buf)
+	rstBuf, err := goo_http_request.Post(URL_ORDER_QUERY, buf)
 	if err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return err
 	}
 
-	goo.Log.WithField("res-xml", string(rstBuf)).Debug("wxpay-close-order")
+	goo_log.WithField("res-xml", string(rstBuf)).Debug("wxpay-close-order")
 
 	rsp := &CloseOrderResponse{}
 	if err := xml.Unmarshal(rstBuf, rsp); err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return err
 	}
 	if rsp.ReturnCode == FAIL {
-		goo.Log.Error(rsp.ReturnMsg)
+		goo_log.Error(rsp.ReturnMsg)
 		return errors.New(rsp.ReturnMsg)
 	}
 	if rsp.ResultCode == FAIL {
-		goo.Log.Error(rsp.ErrCodeDes)
+		goo_log.Error(rsp.ErrCodeDes)
 		return errors.New(rsp.ErrCodeDes)
 	}
 

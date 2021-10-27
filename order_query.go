@@ -4,8 +4,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/liqiongtao/goo"
-	"github.com/liqiongtao/goo/utils"
+	goo_http_request "github.com/liqiongtao/googo.io/goo-http-request"
+	goo_log "github.com/liqiongtao/googo.io/goo-log"
+	goo_utils "github.com/liqiongtao/googo.io/goo-utils"
 	"strings"
 )
 
@@ -21,19 +22,19 @@ type QueryOrderRequest struct {
 
 func (qo *QueryOrderRequest) toXml(apiKey string) []byte {
 	if qo.NonceStr == "" {
-		qo.NonceStr = utils.NonceStr()
+		qo.NonceStr = goo_utils.NonceStr()
 	}
 	if qo.SignType == "" {
 		qo.SignType = SIGN_TYPE_HMAC_SHA256
 	}
 
 	str := obj2querystring(qo) + fmt.Sprintf("&key=%s", apiKey)
-	goo.Log.WithField("query-string", str).Debug("unified-order")
+	goo_log.WithField("query-string", str).Debug("unified-order")
 
 	if qo.SignType == SIGN_TYPE_HMAC_SHA256 {
-		qo.Sign = strings.ToUpper(utils.HMacSha256([]byte(str), []byte(apiKey)))
+		qo.Sign = strings.ToUpper(goo_utils.HMacSha256([]byte(str), []byte(apiKey)))
 	} else if qo.SignType == SIGN_TYPE_MD5 {
-		qo.Sign = strings.ToUpper(utils.MD5([]byte(str)))
+		qo.Sign = strings.ToUpper(goo_utils.MD5([]byte(str)))
 	}
 
 	return obj2xml(qo)
@@ -71,31 +72,31 @@ type QueryOrderResponse struct {
 
 func QueryOrder(req *QueryOrderRequest, apiKey string) (*QueryOrderResponse, error) {
 	buf := req.toXml(apiKey)
-	goo.Log.WithField("req-xml", string(buf)).Debug("wxpay-order-query")
+	goo_log.WithField("req-xml", string(buf)).Debug("wxpay-order-query")
 
-	rstBuf, err := goo.NewRequest().Post(URL_ORDER_QUERY, buf)
+	rstBuf, err := goo_http_request.Post(URL_ORDER_QUERY, buf)
 	if err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return nil, err
 	}
 
-	goo.Log.WithField("res-xml", string(rstBuf)).Debug("wxpay-order-query")
+	goo_log.WithField("res-xml", string(rstBuf)).Debug("wxpay-order-query")
 
 	rsp := &QueryOrderResponse{}
 	if err := xml.Unmarshal(rstBuf, rsp); err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return nil, err
 	}
 	if rsp.ReturnCode == FAIL {
-		goo.Log.Error(rsp.ReturnMsg)
+		goo_log.Error(rsp.ReturnMsg)
 		return nil, errors.New(rsp.ReturnMsg)
 	}
 	if rsp.ResultCode == FAIL {
-		goo.Log.Error(rsp.ErrCodeDes)
+		goo_log.Error(rsp.ErrCodeDes)
 		return nil, errors.New(rsp.ErrCodeDes)
 	}
 	if rsp.TradeState != SUCCESS {
-		goo.Log.Error(tradeStateMsg[rsp.TradeState])
+		goo_log.Error(tradeStateMsg[rsp.TradeState])
 		return nil, errors.New(tradeStateMsg[rsp.TradeState])
 	}
 

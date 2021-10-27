@@ -54,9 +54,9 @@ func OrderPayNotify(buf []byte) (*OrderPayData, error) {
 
 	// var signStr string
 	// if data.SignType == SIGN_TYPE_MD5 {
-	// 	signStr = strings.ToUpper(gooUtils.MD5([]byte(str)))
+	// 	signStr = strings.ToUpper(googoo_utils.MD5([]byte(str)))
 	// } else {
-	// 	signStr = strings.ToUpper(gooUtils.HMacSha256([]byte(str), []byte(apiKey)))
+	// 	signStr = strings.ToUpper(googoo_utils.HMacSha256([]byte(str), []byte(apiKey)))
 	// }
 	//
 	// if signStr != data.Sign {

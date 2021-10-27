@@ -3,8 +3,8 @@ package goo_wxpay
 import (
 	"encoding/xml"
 	"errors"
-	"github.com/liqiongtao/goo"
-	"github.com/liqiongtao/goo/utils"
+	goo_log "github.com/liqiongtao/googo.io/goo-log"
+	goo_utils "github.com/liqiongtao/googo.io/goo-utils"
 	"strings"
 )
 
@@ -37,26 +37,26 @@ func RefundNotify(buf []byte, apiKey string) (*RefundReqInfo, error) {
 	data := &RefundData{}
 
 	if err := xml.Unmarshal(buf, data); err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return nil, err
 	}
 	if data.ReturnCode == FAIL {
-		goo.Log.Error(data.ReturnMsg)
+		goo_log.Error(data.ReturnMsg)
 		return nil, errors.New(data.ReturnMsg)
 	}
 
-	base64buf := utils.Base64Decode(data.ReqInfo)
-	key := strings.ToUpper(utils.MD5([]byte(apiKey)))
-	goo.Log.WithField("base64buf", string(base64buf)).WithField("key", key).Debug()
-	infoBuf, err := utils.AESECBDecrypt(base64buf, []byte(key))
+	base64buf := goo_utils.Base64Decode(data.ReqInfo)
+	key := strings.ToUpper(goo_utils.MD5([]byte(apiKey)))
+	goo_log.WithField("base64buf", string(base64buf)).WithField("key", key).Debug()
+	infoBuf, err := goo_utils.AESECBDecrypt(base64buf, []byte(key))
 	if err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return nil, err
 	}
 
 	info := &RefundReqInfo{}
 	if err := xml.Unmarshal(infoBuf, info); err != nil {
-		goo.Log.Error(err.Error())
+		goo_log.Error(err.Error())
 		return nil, err
 	}
 	return info, nil
