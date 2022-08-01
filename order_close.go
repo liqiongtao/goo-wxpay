@@ -28,7 +28,7 @@ func (co *CloseOrderRequest) toXml(apiKey string) []byte {
 	}
 
 	str := obj2querystring(co) + fmt.Sprintf("&key=%s", apiKey)
-	goo_log.WithField("query-string", str).Debug("wxpay-order-close")
+	goo_log.WithTag("wxpay-order-close").WithField("query-string", str).Debug()
 
 	if co.SignType == SIGN_TYPE_HMAC_SHA256 {
 		co.Sign = strings.ToUpper(goo_utils.HMacSha256([]byte(str), []byte(apiKey)))
@@ -55,27 +55,27 @@ type CloseOrderResponse struct {
 
 func CloseOrder(req *CloseOrderRequest, apiKey string) error {
 	buf := req.toXml(apiKey)
-	goo_log.WithField("req-xml", string(buf)).Debug("wxpay-close-order")
+	goo_log.WithTag("wxpay-close-order").WithField("req-xml", string(buf)).Debug()
 
 	rstBuf, err := goo_http_request.Post(URL_ORDER_QUERY, buf)
 	if err != nil {
-		goo_log.Error(err.Error())
+		goo_log.WithTag("wxpay-close-order").Error(err.Error())
 		return err
 	}
 
-	goo_log.WithField("res-xml", string(rstBuf)).Debug("wxpay-close-order")
+	goo_log.WithTag("wxpay-close-order").WithField("res-xml", string(rstBuf)).Debug()
 
 	rsp := &CloseOrderResponse{}
 	if err := xml.Unmarshal(rstBuf, rsp); err != nil {
-		goo_log.Error(err.Error())
+		goo_log.WithTag("wxpay-close-order").Error(err.Error())
 		return err
 	}
 	if rsp.ReturnCode == FAIL {
-		goo_log.Error(rsp.ReturnMsg)
+		goo_log.WithTag("wxpay-close-order").Error(rsp.ReturnMsg)
 		return errors.New(rsp.ReturnMsg)
 	}
 	if rsp.ResultCode == FAIL {
-		goo_log.Error(rsp.ErrCodeDes)
+		goo_log.WithTag("wxpay-close-order").Error(rsp.ErrCodeDes)
 		return errors.New(rsp.ErrCodeDes)
 	}
 

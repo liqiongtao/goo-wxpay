@@ -3,6 +3,8 @@ package goo_wxpay
 import (
 	"encoding/xml"
 	"errors"
+	goo_utils "github.com/liqiongtao/googo.io/goo-utils"
+	"strings"
 )
 
 type OrderPayData struct {
@@ -36,32 +38,35 @@ type OrderPayData struct {
 	TimeEnd            string    `xml:"time_end"`
 }
 
-func OrderPayNotify(buf []byte) (*OrderPayData, error) {
-	data := &OrderPayData{}
+func OrderPayNotifyVerify(buf []byte, apiKey string) (data *OrderPayData, err error) {
+	data = &OrderPayData{}
 
-	if err := xml.Unmarshal(buf, data); err != nil {
-		return nil, err
+	if err = xml.Unmarshal(buf, data); err != nil {
+		return
 	}
 	if data.ReturnCode == FAIL {
-		return nil, errors.New(data.ReturnMsg)
+		err = errors.New(data.ReturnMsg)
+		return
 	}
 	if data.ResultCode == FAIL {
-		return nil, errors.New(data.ErrCodeDes)
+		err = errors.New(data.ErrCodeDes)
+		return
 	}
 
-	// params := xml2map(buf)
-	// str := map2querystring(params) + "&key=" + apiKey
+	params := xml2map(buf)
+	str := map2querystring(params) + "&key=" + apiKey
 
-	// var signStr string
-	// if data.SignType == SIGN_TYPE_MD5 {
-	// 	signStr = strings.ToUpper(googoo_utils.MD5([]byte(str)))
-	// } else {
-	// 	signStr = strings.ToUpper(googoo_utils.HMacSha256([]byte(str), []byte(apiKey)))
-	// }
-	//
-	// if signStr != data.Sign {
-	// 	return nil, errors.New("签名验证失败")
-	// }
+	var signStr string
+	if data.SignType == SIGN_TYPE_MD5 {
+		signStr = goo_utils.MD5([]byte(str))
+	} else {
+		signStr = goo_utils.HMacSha256([]byte(str), []byte(apiKey))
+	}
 
-	return data, nil
+	if strings.ToLower(signStr) != strings.ToLower(data.Sign) {
+		err = errors.New("签名验证失败")
+		return
+	}
+
+	return
 }

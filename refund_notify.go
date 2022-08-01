@@ -37,26 +37,26 @@ func RefundNotify(buf []byte, apiKey string) (*RefundReqInfo, error) {
 	data := &RefundData{}
 
 	if err := xml.Unmarshal(buf, data); err != nil {
-		goo_log.Error(err.Error())
+		goo_log.WithTag("wxpay-refund-notify").Error(err.Error())
 		return nil, err
 	}
 	if data.ReturnCode == FAIL {
-		goo_log.Error(data.ReturnMsg)
+		goo_log.WithTag("wxpay-refund-notify").Error(data.ReturnMsg)
 		return nil, errors.New(data.ReturnMsg)
 	}
 
 	base64buf := goo_utils.Base64Decode(data.ReqInfo)
 	key := strings.ToUpper(goo_utils.MD5([]byte(apiKey)))
-	goo_log.WithField("base64buf", string(base64buf)).WithField("key", key).Debug()
+	goo_log.WithTag("wxpay-refund-notify").WithField("base64buf", string(base64buf)).WithField("key", key).Debug()
 	infoBuf, err := goo_utils.AESECBDecrypt(base64buf, []byte(key))
 	if err != nil {
-		goo_log.Error(err.Error())
+		goo_log.WithTag("wxpay-refund-notify").Error(err.Error())
 		return nil, err
 	}
 
 	info := &RefundReqInfo{}
 	if err := xml.Unmarshal(infoBuf, info); err != nil {
-		goo_log.Error(err.Error())
+		goo_log.WithTag("wxpay-refund-notify").Error(err.Error())
 		return nil, err
 	}
 	return info, nil

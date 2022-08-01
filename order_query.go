@@ -29,7 +29,7 @@ func (qo *QueryOrderRequest) toXml(apiKey string) []byte {
 	}
 
 	str := obj2querystring(qo) + fmt.Sprintf("&key=%s", apiKey)
-	goo_log.WithField("query-string", str).Debug("unified-order")
+	goo_log.WithTag("unified-order").WithField("query-string", str).Debug()
 
 	if qo.SignType == SIGN_TYPE_HMAC_SHA256 {
 		qo.Sign = strings.ToUpper(goo_utils.HMacSha256([]byte(str), []byte(apiKey)))
@@ -72,31 +72,31 @@ type QueryOrderResponse struct {
 
 func QueryOrder(req *QueryOrderRequest, apiKey string) (*QueryOrderResponse, error) {
 	buf := req.toXml(apiKey)
-	goo_log.WithField("req-xml", string(buf)).Debug("wxpay-order-query")
+	goo_log.WithTag("wxpay-order-query").WithField("req-xml", string(buf)).Debug()
 
 	rstBuf, err := goo_http_request.Post(URL_ORDER_QUERY, buf)
 	if err != nil {
-		goo_log.Error(err.Error())
+		goo_log.WithTag("wxpay-order-query").Error(err.Error())
 		return nil, err
 	}
 
-	goo_log.WithField("res-xml", string(rstBuf)).Debug("wxpay-order-query")
+	goo_log.WithTag("wxpay-order-query").WithField("res-xml", string(rstBuf)).Debug()
 
 	rsp := &QueryOrderResponse{}
 	if err := xml.Unmarshal(rstBuf, rsp); err != nil {
-		goo_log.Error(err.Error())
+		goo_log.WithTag("wxpay-order-query").Error(err.Error())
 		return nil, err
 	}
 	if rsp.ReturnCode == FAIL {
-		goo_log.Error(rsp.ReturnMsg)
+		goo_log.WithTag("wxpay-order-query").Error(rsp.ReturnMsg)
 		return nil, errors.New(rsp.ReturnMsg)
 	}
 	if rsp.ResultCode == FAIL {
-		goo_log.Error(rsp.ErrCodeDes)
+		goo_log.WithTag("wxpay-order-query").Error(rsp.ErrCodeDes)
 		return nil, errors.New(rsp.ErrCodeDes)
 	}
 	if rsp.TradeState != SUCCESS {
-		goo_log.Error(tradeStateMsg[rsp.TradeState])
+		goo_log.WithTag("wxpay-order-query").Error(tradeStateMsg[rsp.TradeState])
 		return nil, errors.New(tradeStateMsg[rsp.TradeState])
 	}
 
