@@ -59,6 +59,7 @@ const (
 type TradeType string
 
 const (
+	TRADE_TYPE_MWEB     TradeType = "MWEB"     // h5
 	TRADE_TYPE_JSAPI    TradeType = "JSAPI"    // 微信h5, 小程序
 	TRADE_TYPE_NATIVE   TradeType = "NATIVE"   // native
 	TRADE_TYPE_APP      TradeType = "APP"      // android, ios
