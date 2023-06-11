@@ -70,7 +70,7 @@ func map2querystring(data map[string]interface{}) string {
 	return strings.Join(params, "&")
 }
 
-func xml2map(buf []byte) map[string]interface{} {
+func Xml2Map(buf []byte) map[string]interface{} {
 	field := ""
 	params := map[string]interface{}{}
 

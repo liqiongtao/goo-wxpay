@@ -53,7 +53,7 @@ func OrderPayNotifyVerify(buf []byte, apiKey string) (data *OrderPayData, err er
 		return
 	}
 
-	params := xml2map(buf)
+	params := Xml2Map(buf)
 	str := map2querystring(params) + "&key=" + apiKey
 
 	var signStr string
