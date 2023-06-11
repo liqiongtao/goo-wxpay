@@ -126,7 +126,7 @@ func UnifiedOrder(req *UnifiedOrderRequest, apiKey string) (resp UnifiedOrderRes
 	goo_log.WithTag("wxpay-unified-order").WithField("req-xml", string(buf)).Debug()
 
 	var rstBuf []byte
-	rstBuf, err = goo_http_request.Post(URL_UNIFIED_ORDER, buf)
+	rstBuf, err = goo_http_request.New().Debug().Post(URL_UNIFIED_ORDER, buf)
 	if err != nil {
 		goo_log.WithTag("wxpay-unified-order").Error(err.Error())
 		return
