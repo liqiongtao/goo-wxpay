@@ -134,19 +134,18 @@ func UnifiedOrder(req *UnifiedOrderRequest, apiKey string) (resp UnifiedOrderRes
 
 	goo_log.WithTag("wxpay-unified-order").WithField("res-xml", string(rstBuf)).Debug()
 
-	rsp := UnifiedOrderResponse{}
-	if err = xml.Unmarshal(rstBuf, &rsp); err != nil {
+	if err = xml.Unmarshal(rstBuf, &resp); err != nil {
 		goo_log.WithTag("wxpay-unified-order").Error(err.Error())
 		return
 	}
-	if rsp.ReturnCode == FAIL {
-		goo_log.WithTag("wxpay-unified-order").Error(rsp.ReturnMsg)
-		err = errors.New(rsp.ReturnMsg)
+	if resp.ReturnCode == FAIL {
+		goo_log.WithTag("wxpay-unified-order").Error(resp.ReturnMsg)
+		err = errors.New(resp.ReturnMsg)
 		return
 	}
-	if rsp.ResultCode == FAIL {
-		goo_log.WithTag("wxpay-unified-order").Error(rsp.ErrCodeDes)
-		err = errors.New(rsp.ErrCodeDes)
+	if resp.ResultCode == FAIL {
+		goo_log.WithTag("wxpay-unified-order").Error(resp.ErrCodeDes)
+		err = errors.New(resp.ErrCodeDes)
 		return
 	}
 
